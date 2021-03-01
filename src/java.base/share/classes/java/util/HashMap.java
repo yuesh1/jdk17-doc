@@ -282,6 +282,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     static final int UNTREEIFY_THRESHOLD = 6;
 
     /**
+     * 在链表进行树化的时候进行判断
+     *
+     * 如果总的Node数量小于64，那么仅进行扩容，不进行树化
+     *
      * The smallest table capacity for which bins may be treeified.
      * (Otherwise the table is resized if too many nodes in a bin.)
      * Should be at least 4 * TREEIFY_THRESHOLD to avoid conflicts
@@ -758,6 +762,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
             if (e != null) { // existing mapping for key
                 V oldValue = e.value;
+                // onlyIfAbsent 表示是否仅在 oldValue 为 null 的情况下更新键值对的值
                 if (!onlyIfAbsent || oldValue == null)
                     e.value = value;
                 afterNodeAccess(e);
@@ -926,10 +931,13 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final void treeifyBin(Node<K,V>[] tab, int hash) {
         int n, index; Node<K,V> e;
+        // 并不一定全部是树化，有可能只是扩容
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
+
         else if ((e = tab[index = (n - 1) & hash]) != null) {
             TreeNode<K,V> hd = null, tl = null;
+            // 把普通节点转换成树节点（非红黑树）
             do {
                 TreeNode<K,V> p = replacementTreeNode(e, null);
                 if (tl == null)
@@ -940,7 +948,9 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 }
                 tl = p;
             } while ((e = e.next) != null);
+
             if ((tab[index] = hd) != null)
+                // 转红黑树操作，循环比较、旋转、染色
                 hd.treeify(tab);
         }
     }
@@ -2222,6 +2232,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         }
 
         /**
+         * 转红黑树操作
+         *
          * Forms tree of the nodes linked from this node.
          */
         final void treeify(Node<K,V>[] tab) {
