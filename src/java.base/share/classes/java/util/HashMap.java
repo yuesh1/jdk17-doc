@@ -379,15 +379,27 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     /**
+     * 如果对象x的类是C，如果C实现了Comparable<C>接口，那么返回C，否则返回null
+     *
+     *
      * Returns x's Class if it is of the form "class C implements
      * Comparable<C>", else null.
      */
     static Class<?> comparableClassFor(Object x) {
         if (x instanceof Comparable) {
             Class<?> c; Type[] ts, as; ParameterizedType p;
+            // 为什么如果x是个字符串就直接返回c了呢 ? 因为String  实现了 Comparable 接口，可参考如下String类的定义
+            // public final class String implements java.io.Serializable, Comparable<String>, CharSequence
             if ((c = x.getClass()) == String.class) // bypass checks
                 return c;
+
+            // 如果 c 不是字符串类，获取c直接实现的接口（如果是泛型接口则附带泛型信息）
             if ((ts = c.getGenericInterfaces()) != null) {
+                // 遍历接口数组
+                // 如果当前接口t是个泛型接口
+                // 如果该泛型接口t的原始类型p 是 Comparable 接口
+                // 如果该Comparable接口p只定义了一个泛型参数
+                // 如果这一个泛型参数的类型就是c，那么返回c
                 for (Type t : ts) {
                     if ((t instanceof ParameterizedType) &&
                         ((p = (ParameterizedType) t).getRawType() ==
@@ -396,6 +408,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                         as.length == 1 && as[0] == c) // type arg is c
                         return c;
                 }
+                // 上面for循环的目的就是为了看看x的class是否 implements  Comparable<x的class>
             }
         }
         return null;
